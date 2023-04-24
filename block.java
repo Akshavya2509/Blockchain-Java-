@@ -117,21 +117,15 @@ public class Main {
     Blockchain blockchain = new Blockchain();
 
     // First transaction data
-    TransactionData data1 = new TransactionData();
-    data1.amount = 1.5;
-    data1.receiverKey = "Utkarsh Tripathi";
-    data1.senderKey = "Akshat Mehra";
-    data1.timestamp = new Date().getTime(); // Get current timestamp
+    TransactionData data1 = new TransactionData(1.5, "Akshat Mehra", "Utkarsh Tripathi", new Date().getTime());
+
 
     // Add first block
     blockchain.addBlock(data1);
 
     // Second transaction data
-    TransactionData data2 = new TransactionData();
-    data2.amount = 1.5;
-    data2.receiverKey = "Akshat Jaimini";
-    data2.senderKey = "Amit Goyal";
-    data2.timestamp = new Date().getTime(); // Get current timestamp
+    TransactionData data1 = new TransactionData(1.5, "Akshat Jaimini", "Amit Goyal", new Date().getTime());
+
 
     // Add second block
     blockchain.addBlock(data2);
