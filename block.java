@@ -1,20 +1,20 @@
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.Objects;
 
 // Transaction Data
 class TransactionData {
     double amount;
     String senderKey;
     String receiverKey;
-    long timeStamp;
+    long timestamp;
 
-    TransactionData(double amount, String senderKey, String receiverKey, long timeStamp) {
+    TransactionData(double amount, String senderKey, String receiverKey) {
         this.amount = amount;
         this.senderKey = senderKey;
         this.receiverKey = receiverKey;
-        this.timeStamp = timeStamp;
+        this.timestamp = new Date().getTime();
     }
 }
 
@@ -23,39 +23,20 @@ class Block {
     private int index;
     private long blockHash;
     private long previousHash;
-    private TransactionData data;
 
-    Block(int index, TransactionData data, long previousHash) {
+    Block(int index, TransactionData data, long prevHash) {
         this.index = index;
         this.data = data;
-        this.previousHash = previousHash;
+        this.previousHash = prevHash;
         this.blockHash = generateHash();
     }
 
     private long generateHash() {
-        MessageDigest digest;
-        String toHash = data.amount + data.senderKey + data.receiverKey + data.timeStamp + previousHash;
-
-        try {
-            digest = MessageDigest.getInstance("SHA-256");
-            byte[] hash = digest.digest(toHash.getBytes());
-
-            StringBuilder hexString = new StringBuilder();
-            for (byte hashByte : hash) {
-                String hex = Integer.toHexString(0xff & hashByte);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return Long.parseLong(hexString.toString(), 16);
-        } catch (NoSuchAlgorithmException e) {
-            e.printStackTrace();
-        }
-        return 0;
+        String toHash = String.valueOf(data.amount) + data.receiverKey + data.senderKey + String.valueOf(data.timestamp);
+        return Objects.hash(toHash) + previousHash;
     }
 
-    long getBlockHash() {
+    long getHash() {
         return blockHash;
     }
 
@@ -63,75 +44,81 @@ class Block {
         return previousHash;
     }
 
+    TransactionData data;
+
     boolean isHashValid() {
         return generateHash() == blockHash;
     }
 }
 
-// Blockchain class
+// Blockchain
 class Blockchain {
-    private ArrayList<Block> chain;
+    private List<Block> chain;
 
     Blockchain() {
         chain = new ArrayList<>();
-        chain.add(createGenesisBlock());
+        Block genesis = createGenesisBlock();
+        chain.add(genesis);
     }
 
     private Block createGenesisBlock() {
-        TransactionData genesisData = new TransactionData(0, "None", "None", new Date().getTime());
-        return new Block(0, genesisData, 0);
+        TransactionData data = new TransactionData(0, "None", "None");
+        Block genesis = new Block(0, data, Objects.hash(0));
+        return genesis;
     }
 
-    private Block getLatestBlock() {
+    Block getLatestBlock() {
         return chain.get(chain.size() - 1);
     }
 
     void addBlock(TransactionData data) {
         int index = chain.size() - 1;
-        Block newBlock = new Block(index, data, getLatestBlock().getBlockHash());
+        Block newBlock = new Block(index, data, getLatestBlock().getHash());
         chain.add(newBlock);
     }
 
     boolean isChainValid() {
-        int chainLength = chain.size();
+        int chainLen = chain.size();
 
-        for (int i = 0; i < chainLength; i++) {
+        for (int i = 0; i < chainLen; i++) {
             Block currentBlock = chain.get(i);
             if (!currentBlock.isHashValid()) {
                 return false;
             }
 
-            if (i > 0) {
+            if (chainLen > 1 && i > 0) {
                 Block previousBlock = chain.get(i - 1);
-                if (currentBlock.getPreviousHash() != previousBlock.getBlockHash()) {
+                if (currentBlock.getPreviousHash() != previousBlock.getHash()) {
                     return false;
                 }
             }
         }
+
         return true;
     }
 }
 
-public class Main {
+class Main {
     public static void main(String[] args) {
-    Blockchain blockchain = new Blockchain();
+        Blockchain TWSCCoin = new Blockchain();
 
-    // First transaction data
-    TransactionData data1 = new TransactionData(1.5, "Akshat Mehra", "Utkarsh Tripathi", new Date().getTime());
+        TransactionData data1 = new TransactionData(1.5, "Akshat Mehra", "Utkarsh Tripathi");
+        TWSCCoin.addBlock(data1);
 
+        System.out.println("Is chain Valid?");
+        System.out.println(TWSCCoin.isChainValid());
 
-    // Add first block
-    blockchain.addBlock(data1);
+        TransactionData data2 = new TransactionData(1.5, "Amit Goyal", "Akshat Jaimini");
+        TWSCCoin.addBlock(data2);
 
-    // Second transaction data
-    TransactionData data1 = new TransactionData(1.5, "Akshat Jaimini", "Amit Goyal", new Date().getTime());
+        System.out.println("Now is the chain valid?");
+        System.out.println(TWSCCoin.isChainValid());
 
+        Block hackBlock = TWSCCoin.getLatestBlock();
+        hackBlock.data.amount = 10000;
+        hackBlock.data.receiverKey = "Akshavya - From Crypto Enthusiasts";
 
-    // Add second block
-    blockchain.addBlock(data2);
-
-    // Check if chain is valid
-    boolean isChainValid = blockchain.isChainValid();
-    System.out.println("Is chain valid? " + isChainValid);
-}
+        System.out.println("Now is the chain still valid?");
+        System.out.println(TWSCCoin.isChainValid());
+    }
 }
